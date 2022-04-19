@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ var (
 	introChID   = os.Getenv("TRAQ_INTRO_CHANNNEL_ID")
 	cli         = traq.NewAPIClient(traq.NewConfiguration())
 	auth        = context.WithValue(context.Background(), traq.ContextAccessToken, accessToken)
+	re          = regexp.MustCompile("^#(gps|other|random|ramen)")
 )
 
 func main() {
@@ -50,23 +52,11 @@ func introduceChannel() {
 			continue
 		}
 
-		todayCh = ch
+		fp := getFullPath(ch, chMap)
 
-		break
-	}
-
-	fullPath = todayCh.GetName()
-	_ch := todayCh
-
-	// get full path
-	for {
-		if pid, ok := _ch.GetParentIdOk(); ok && pid != nil {
-			if parent, ok := chMap[*pid]; ok {
-				fullPath = parent.GetName() + "/" + fullPath
-				_ch = parent
-			}
-		} else {
-			fullPath = "#" + fullPath
+		if re.MatchString(fp) {
+			todayCh = ch
+			fullPath = fp
 
 			break
 		}
@@ -118,6 +108,26 @@ func getChannelsMap() map[string]traq.Channel {
 	}
 
 	return chMap
+}
+
+func getFullPath(ch traq.Channel, chMap map[string]traq.Channel) string {
+	fullPath := ch.GetName()
+	_ch := ch
+
+	for {
+		if pid, ok := _ch.GetParentIdOk(); ok && pid != nil {
+			if parent, ok := chMap[*pid]; ok {
+				fullPath = parent.GetName() + "/" + fullPath
+				_ch = parent
+			}
+		} else {
+			fullPath = "#" + fullPath
+
+			break
+		}
+	}
+
+	return fullPath
 }
 
 func getSubscriversNumStr(id string) string {
