@@ -28,7 +28,7 @@ func main() {
 		cron.WithChain(cron.Recover(cron.DefaultLogger)),
 	)
 
-	if _, err := c.AddFunc("0 8,14,20 * * *", introduceChannel); err != nil {
+	if _, err := c.AddFunc("0 7,11,15,19,23 * * *", introduceChannel); err != nil {
 		panic(err)
 	}
 
