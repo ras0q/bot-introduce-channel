@@ -185,7 +185,7 @@ func postMessage(chid string, msg string, embed bool) {
 		Execute()
 	if err != nil {
 		panic(err)
-	} else if res.StatusCode != http.StatusOK {
+	} else if res.StatusCode != http.StatusCreated {
 		panic(res.Status)
 	}
 }
