@@ -199,7 +199,7 @@ func getSubscribersNumStr(id string, userMap map[string]traq.User) string {
 			continue
 		}
 
-		subscribersSummary += fmt.Sprintf(":%s:", user.Name)
+		subscribersSummary += fmt.Sprintf(":@%s:", user.Name)
 	}
 
 	return subscribersSummary
@@ -224,7 +224,7 @@ func getMsgsAndTalkersNumStr(id string, userMap map[string]traq.User) (string, s
 			continue
 		}
 
-		talkersSummary += ":" + user.Name + ":"
+		talkersSummary += ":@" + user.Name + ":"
 	}
 
 	return msgsCount, talkersSummary
