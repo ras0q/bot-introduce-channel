@@ -86,7 +86,7 @@ func introduceChannel() {
 ## %s
 %s
 |説明|数|
-|-|-:|
+|:-|:-|
 |メンバー数|%s|
 |総メッセージ数|%s|
 |会話に参加したユーザー数|%s|
@@ -192,7 +192,7 @@ func getSubscribersNumStr(id string, userMap map[string]traq.User) string {
 		panic(res.Status)
 	}
 
-	subscribersSummary := fmt.Sprintf("%d人: ", len(subs))
+	subscribersSummary := fmt.Sprintf("%d人 ", len(subs))
 	for _, sub := range subs {
 		user, ok := userMap[sub]
 		if !ok {
@@ -217,7 +217,7 @@ func getMsgsAndTalkersNumStr(id string, userMap map[string]traq.User) (string, s
 
 	msgsCount := fmt.Sprintf("%d件", stats.TotalMessageCount)
 
-	talkersSummary := fmt.Sprintf("%d人: ", len(stats.Users))
+	talkersSummary := fmt.Sprintf("%d人 ", len(stats.Users))
 	for _, statsUser := range stats.Users {
 		user, ok := userMap[statsUser.Id]
 		if !ok {
