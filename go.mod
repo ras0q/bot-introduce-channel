@@ -1,6 +1,6 @@
 module git.trap.jp/Ras/bot-introduce-channel
 
-go 1.17
+go 1.22
 
 require (
 	github.com/robfig/cron/v3 v3.0.1

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -45,6 +44,7 @@ func introduceChannel() {
 	)
 
 	chMap := getChannelsMap()
+	userMap := getUsersMap()
 
 	// get a channel at random
 	for _, ch := range chMap {
@@ -68,8 +68,8 @@ func introduceChannel() {
 	}
 
 	cid := todayCh.GetId()
-	subs := getSubscriversNumStr(cid)
-	msgs, talkers := getMsgsAndTalkersNumStr(cid)
+	subs := getSubscribersNumStr(cid, userMap)
+	msgs, talkers := getMsgsAndTalkersNumStr(cid, userMap)
 	pins := getPinsNumStr(cid)
 	msg := fmt.Sprintf(
 		`きなのがチャンネルを紹介するやんね！
@@ -110,6 +110,24 @@ func getChannelsMap() map[string]traq.Channel {
 	return chMap
 }
 
+func getUsersMap() map[string]traq.User {
+	users, res, err := cli.UserApi.
+		GetUsers(auth).
+		Execute()
+	if err != nil {
+		panic(err)
+	} else if res.StatusCode != http.StatusOK {
+		panic(res.Status)
+	}
+
+	userMap := make(map[string]traq.User)
+	for _, user := range users {
+		userMap[user.GetId()] = user
+	}
+
+	return userMap
+}
+
 func getFullPath(ch traq.Channel, chMap map[string]traq.Channel) string {
 	fullPath := ch.GetName()
 	_ch := ch
@@ -130,7 +148,7 @@ func getFullPath(ch traq.Channel, chMap map[string]traq.Channel) string {
 	return fullPath
 }
 
-func getSubscriversNumStr(id string) string {
+func getSubscribersNumStr(id string, userMap map[string]traq.User) string {
 	subs, res, err := cli.ChannelApi.
 		GetChannelSubscribers(auth, id).
 		Execute()
@@ -140,10 +158,20 @@ func getSubscriversNumStr(id string) string {
 		panic(res.Status)
 	}
 
-	return strconv.Itoa(len(subs))
+	subscribersSummary := fmt.Sprintf("%d人: ", len(subs))
+	for _, sub := range subs {
+		user, ok := userMap[sub]
+		if !ok {
+			continue
+		}
+
+		subscribersSummary += fmt.Sprintf(":%s:", user.Name)
+	}
+
+	return subscribersSummary
 }
 
-func getMsgsAndTalkersNumStr(id string) (string, string) {
+func getMsgsAndTalkersNumStr(id string, userMap map[string]traq.User) (string, string) {
 	stats, res, err := cli.ChannelApi.
 		GetChannelStats(auth, id).
 		Execute()
@@ -153,7 +181,19 @@ func getMsgsAndTalkersNumStr(id string) (string, string) {
 		panic(res.Status)
 	}
 
-	return strconv.Itoa(int(stats.TotalMessageCount)), strconv.Itoa(len(stats.Users))
+	msgsCount := fmt.Sprintf("%d件", stats.TotalMessageCount)
+
+	talkersSummary := fmt.Sprintf("%d人: ", len(stats.Users))
+	for _, statsUser := range stats.Users {
+		user, ok := userMap[statsUser.Id]
+		if !ok {
+			continue
+		}
+
+		talkersSummary += ":" + user.Name + ":"
+	}
+
+	return msgsCount, talkersSummary
 }
 
 func getPinsNumStr(id string) string {
@@ -166,7 +206,7 @@ func getPinsNumStr(id string) string {
 		panic(res.Status)
 	}
 
-	return strconv.Itoa(len(pins))
+	return fmt.Sprintf("%d件", len(pins))
 }
 
 func postMessage(chid string, msg string, embed bool) {
