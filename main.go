@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -39,8 +40,9 @@ func main() {
 
 func introduceChannel() {
 	var (
-		todayCh  traq.Channel
-		fullPath string
+		todayCh    traq.Channel
+		fullPath   string
+		latestMsgs []traq.Message
 	)
 
 	chMap := getChannelsMap()
@@ -55,8 +57,16 @@ func introduceChannel() {
 		fp := getFullPath(ch, chMap)
 
 		if re.MatchString(fp) {
+			msgs := getLatestMsgs(ch)
+			if len(msgs) < 3 {
+				continue
+			}
+
+			slices.Reverse(msgs)
+
 			todayCh = ch
 			fullPath = fp
+			latestMsgs = msgs
 
 			break
 		}
@@ -80,13 +90,22 @@ func introduceChannel() {
 |メンバー数|%s|
 |総メッセージ数|%s|
 |会話に参加したユーザー数|%s|
-|ピン止め数|%s|`,
+|ピン止め数|%s|
+
+直近のメッセージ
+
+https://q.trap.jp/messages/%s
+https://q.trap.jp/messages/%s
+https://q.trap.jp/messages/%s`,
 		fullPath,
 		topic,
 		subs,
 		msgs,
 		talkers,
 		pins,
+		latestMsgs[0].GetId(),
+		latestMsgs[1].GetId(),
+		latestMsgs[2].GetId(),
 	)
 
 	postMessage(introChID, msg, true)
@@ -126,6 +145,21 @@ func getUsersMap() map[string]traq.User {
 	}
 
 	return userMap
+}
+
+func getLatestMsgs(ch traq.Channel) []traq.Message {
+	msgs, res, err := cli.ChannelApi.
+		GetMessages(auth, ch.GetId()).
+		Limit(3).
+		Order("desc").
+		Execute()
+	if err != nil {
+		panic(err)
+	} else if res.StatusCode != http.StatusOK {
+		panic(res.Status)
+	}
+
+	return msgs
 }
 
 func getFullPath(ch traq.Channel, chMap map[string]traq.Channel) string {
