@@ -19,7 +19,7 @@ var (
 	introChID   = os.Getenv("TRAQ_INTRO_CHANNNEL_ID")
 	cli         = traq.NewAPIClient(traq.NewConfiguration())
 	auth        = context.WithValue(context.Background(), traq.ContextAccessToken, accessToken)
-	re          = regexp.MustCompile("^#(gps|other|random|ramen)")
+	ignoreRe    = regexp.MustCompile("^#(general|univ)")
 )
 
 func main() {
@@ -56,7 +56,7 @@ func introduceChannel() {
 
 		fp := getFullPath(ch, chMap)
 
-		if re.MatchString(fp) {
+		if !ignoreRe.MatchString(fp) {
 			msgs := getLatestMsgs(ch)
 			if len(msgs) < 3 {
 				continue
